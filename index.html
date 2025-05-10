@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductor Spotify Dark</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #141414;
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Centra verticalmente */
+            align-items: center; /* Centra horizontalmente */
+        }
+
+        .header {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%; /* Asegura que el header ocupe todo el ancho */
+        }
+
+        .back-button {
+            display: flex;
+        }
+
+        .back-line {
+            width: 24px;
+            height: 3px;
+            background-color: #7e7e7e;
+            transform: rotate(45deg);
+            position: relative;
+        }
+
+        .back-line:after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 3px;
+            background-color: #7e7e7e;
+            transform: rotate(-90deg);
+        }
+
+        .header-text {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .more-button {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dot {
+            width: 4px;
+            height: 4px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            margin: 1px 0;
+        }
+
+        .album-cover {
+            padding: 24px 32px;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 16px; /* Añade margen inferior para separar del contenedor de progreso */
+        }
+
+        .cover-image {
+            width: 256px;
+            height: 256px;
+            border-radius: 20px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+            background-color: #333;
+            background-image: url('/api/placeholder/256/256');
+            background-size: cover;
+        }
+
+        .song-info {
+            padding: 0 24px;
+            margin-top: 8px;
+            width: 100%; /* Asegura que la info de la canción ocupe el ancho completo */
+            text-align: center; /* Centra el texto */
+        }
+
+        .song-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .song-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .song-artist {
+            color: #b3b3b3;
+            font-size: 16px;
+        }
+
+        .heart-icon {
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            stroke: #b3b3b3;
+            stroke-width: 2px;
+            fill: none;
+            transition: all 0.3s ease;
+        }
+
+        .heart-icon.liked {
+            fill: #b91d3f;
+            stroke: #b91d3f;
+        }
+
+        .progress-container {
+            padding: 16px 24px;
+            width: 100%; /* Asegura que el contenedor de progreso ocupe el ancho completo */
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background-color: #333333;
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .progress {
+            height: 100%;
+            background-color: #b3b3b3;
+            border-radius: 2px;
+            width: 0%;
+            position: relative;
+        }
+
+        .progress-handle {
+            width: 12px;
+            height: 12px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            position: absolute;
+            right: -6px;
+            top: -4px;
+            transform: scale(0);
+            transition: transform 0.1s ease;
+        }
+
+        .progress-bar:hover .progress-handle {
+            transform: scale(1);
+        }
+
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            color: #b3b3b3;
+            font-size: 12px;
+            margin-top: 4px;
+            width: 100%; /* Asegura que la info de tiempo ocupe el ancho completo */
+        }
+
+        .controls {
+            padding: 8px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%; /* Asegura que los controles ocupen el ancho completo */
+        }
+
+        .side-button {
+            width: 20px;
+            height: 20px;
+            color: #b3b3b3;
+            cursor: pointer;
+        }
+
+        .main-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        .control-button {
+            width: 32px;
+            height: 32px;
+            color: #ffffff;
+            cursor: pointer;
+            margin: 0 8px;
+        }
+
+        .play-button {
+            width: 56px;
+            height: 56px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            margin: 0 16px;
+        }
+
+        .play-icon, .pause-icon {
+            width: 24px;
+            height: 24px;
+        }
+
+        .pause-icon {
+            display: none;
+        }
+
+        .volume-container {
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            width: 100%; /* Asegura que el contenedor de volumen ocupe el ancho completo */
+            display: none; /* Oculta el contenedor de volumen */
+        }
+
+        .volume-icon {
+            width: 20px;
+            height: 20px;
+            color: #b3b3b3;
+        }
+
+        .volume-slider {
+            flex: 1;
+            height: 4px;
+            background-color: #333333;
+            border-radius: 2px;
+            margin: 0 16px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .volume-level {
+            height: 100%;
+            background-color: #b3b3b3;
+            border-radius: 2px;
+            width: 70%;
+        }
+    </style>
+</head>
+<body>
+    <audio id="audio" src="./El Derecho de los Lobos(4).wav"></audio>
+  
+    <div class="album-cover">
+        <div class="cover-image">
+            <img src="./9788420460819_1120.jpg" width="100%" style="border-radius: 20px;" alt="" srcset="">
+        </div>
+    </div>
+    
+    <div class="song-info">
+        <div class="song-header">
+            <div>
+                <div class="song-title">Episodio Especial: Cayetana y el Derecho de los lobos</div>
+                <div class="song-artist">Alexandra y Christopher</div>
+            </div>
+            <svg class="heart-icon liked" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+        </div>
+    </div>
+    
+    <div class="progress-container">
+        <div class="progress-bar">
+            <div class="progress">
+                <div class="progress-handle"></div>
+            </div>
+        </div>
+        <div class="time-info">
+            <div class="current-time">0:00</div>
+            <div class="total-time">5:32</div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <svg class="side-button" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+     
+        </svg>
+        
+        <div class="main-controls">
+           
+            <div class="play-button">
+                <svg class="play-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="5 3 19 12 5 21 5 3" fill="#000000"></polygon>
+                </svg>
+                <svg class="pause-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="6" y="4" width="4" height="16" fill="#000000"></rect>
+                    <rect x="14" y="4" width="4" height="16" fill="#000000"></rect>
+                </svg>
+            </div>
+           
+        </div>
+        
+        <svg class="side-button" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+         
+        </svg>
+    </div>
+
+    <div class="volume-container">
+        <svg class="volume-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="14 16 0 16 0 8 14 8 18 4 18 20 14 16"></polygon>
+            <path d="M23.38 16.13a7.36 7.36 0 0 0 0-8.26A2.3 2.3 0 0 1 21 10.66a2.3 2.3 0 0 1 2.38 2.77z"></path>
+            <path d="M23.94 8.57a11.75 11.75 0 0 0 0-1.7A2.3 2.3 0 0 1 21.56 5a2.3 2.3 0 0 1 2.37 3.57z"></path>
+        </svg>
+        <div class="volume-slider">
+            <div class="volume-level"></div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <script>
+        // Variables
+        let isPlaying = false;
+        let currentTime = 0;
+        const songDuration = 217; // 3:37 en segundos
+        let volume = 70;
+        let isLiked = true;
+        let playInterval;
+        
+        // Elementos DOM
+        const playButton = document.querySelector('.play-button');
+        const playIcon = document.querySelector('.play-icon');
+        const pauseIcon = document.querySelector('.pause-icon');
+        const progressBar = document.querySelector('.progress');
+        const currentTimeEl = document.querySelector('.current-time');
+        const heartIcon = document.querySelector('.heart-icon');
+        const volumeLevel = document.querySelector('.volume-level');
+        const progressContainer = document.querySelector('.progress-bar');
+        const volumeContainer = document.querySelector('.volume-slider');
+        const audio = document.getElementById('audio'); // Obtener el elemento de audio
+        
+        // Formato de tiempo
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' + secs : secs}`;
+        }
+        
+        // Actualizar progreso
+        function updateProgress() {
+            const progressPercent = (currentTime / songDuration) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            currentTimeEl.textContent = formatTime(currentTime);
+            
+            if (currentTime >= songDuration) {
+                pausePlayback();
+                currentTime = 0;
+                updateProgress();
+            }
+        }
+        
+        // Iniciar reproducción
+        function startPlayback() {
+            isPlaying = true;
+            playIcon.style.display = 'none';
+            pauseIcon.style.display = 'block';
+            playInterval = setInterval(() => {
+                currentTime++;
+                updateProgress();
+            }, 1000);
+            audio.play(); // Iniciar la reproducción del audio
+        }
+        
+        // Pausar reproducción
+        function pausePlayback() {
+            isPlaying = false;
+            playIcon.style.display = 'block';
+            pauseIcon.style.display = 'none';
+            clearInterval(playInterval);
+            audio.pause(); // Pausar la reproducción del audio
+        }
+        
+        // Control de reproducción
+        playButton.addEventListener('click', () => {
+            if (isPlaying) {
+                pausePlayback();
+            } else {
+                startPlayback();
+            }
+        });
+        
+        // Control de Me gusta
+        heartIcon.addEventListener('click', () => {
+            isLiked = !isLiked;
+            if (isLiked) {
+                heartIcon.classList.add('liked');
+            } else {
+                heartIcon.classList.remove('liked');
+            }
+        });
+        
+        // Control de progreso
+        progressContainer.addEventListener('click', (e) => {
+            const progressWidth = progressContainer.clientWidth;
+            const clickPosition = e.offsetX;
+            const clickPercentage = (clickPosition / progressWidth);
+            
+            currentTime = Math.floor(songDuration * clickPercentage);
+            updateProgress();
+            audio.currentTime = currentTime; // Establecer el tiempo de reproducción del audio
+        });
+        
+        // Control de volumen
+        volumeContainer.addEventListener('click', (e) => {
+            const volumeWidth = volumeContainer.clientWidth;
+            const clickPosition = e.offsetX;
+            const newVolume = (clickPosition / volumeWidth) * 100;
+            
+            volume = Math.floor(newVolume);
+            volumeLevel.style.width = `${volume}%`;
+            audio.volume = volume / 100; // Establecer el volumen del audio (0 a 1)
+        });
+        
+        // Inicialización
+        updateProgress();
+        audio.volume = volume / 100;
+
+      
+           var duration = 15 * 1000;
+var animationEnd = Date.now() + duration;
+var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+function randomInRange(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+var interval = setInterval(function() {
+  var timeLeft = animationEnd - Date.now();
+
+  if (timeLeft <= 0) {
+    return clearInterval(interval);
+  }
+console.log("confetti");
+  var particleCount = 50 * (timeLeft / duration);
+  // since particles fall down, start a bit higher than random
+  confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+  confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+}, 250);
+        
+    </script>
+</body>
+</html>
